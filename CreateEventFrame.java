@@ -286,9 +286,9 @@ public class CreateEventFrame extends JFrame{
 						else {
 							firstDay = firstDay.plusMonths(1);
 						}
-						firstDay = LocalDate.of(firstDay.getYear(), firstDay.getMonth(), 1);
 						click = LocalDate.of(firstDay.getYear(), firstDay.getMonth(), Integer.parseInt(button.getText()));
 					}
+					firstDay = LocalDate.of(firstDay.getYear(), firstDay.getMonth(), 1);
 
 					cf.setCurrentClick(click);
 					cf.setFirstDay(firstDay);

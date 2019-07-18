@@ -25,6 +25,7 @@ public class EventFrame extends JFrame implements ChangeListener{
 	private EventFormatter formatter;
 	private final JTextArea textArea;
 	private int days;
+	private String view;
 	private LocalDate current;
 	private String result;
     private JButton dayButton;
@@ -45,6 +46,7 @@ public class EventFrame extends JFrame implements ChangeListener{
 		agendaButton = new JButton("Agenda");
 		fileButton = new JButton("From File");
 		result = "";
+		view = "day";
 	    final Container contentPane = getContentPane();
 	    setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
 	    
@@ -79,7 +81,7 @@ public class EventFrame extends JFrame implements ChangeListener{
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				calendarFrame.setView("day");
+				calendarFrame.setView(view);
 				stateChanged(null);
 				setTextArea();
 				result = "";
