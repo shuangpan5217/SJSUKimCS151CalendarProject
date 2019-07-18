@@ -189,6 +189,7 @@ public class EventFrame extends JFrame implements ChangeListener{
 				
 		}
 		result = dataModel.format(eventsOnCurrentDay, formatter, current);
+		result = result.trim() + '\n';
 	}
 	
 	public void setTextArea() {
