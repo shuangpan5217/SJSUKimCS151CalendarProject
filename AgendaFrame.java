@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowFocusListener;
 import java.time.LocalDate;
@@ -17,57 +16,52 @@ import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 
-public class CreateEventFrame extends JFrame{
+public class AgendaFrame extends JFrame{
 	private LocalDate firstDay;
 	private LocalDate click;
-	private CalendarFrame cf;
-	@SuppressWarnings("unused")
-	private DataModel dataModel;
 	public static final String DAY_OF_WEEK = "SMTWTFA";
+	private JButton date;
+	@SuppressWarnings("unused")
+	private EventFrame ef;
 	
 	private static final long serialVersionUID = 1L;
-
-	public CreateEventFrame(LocalDate click, CalendarFrame cf, DataModel dataModel, JButton createButton, MouseListener[] mouseListeners) {
-		this.cf = cf;
-		this.click = click;
+	public AgendaFrame(LocalDate click, EventFrame ef) {
+		this.click = LocalDate.of(click.getYear(), click.getMonth(), click.getDayOfMonth());
 		firstDay = LocalDate.of(click.getYear(), click.getMonth(), 1);
-		this.dataModel = dataModel;
+		date = new JButton(click.toString());
+		setTitle("Agenda");
+		this.ef = ef;
 		
-		
-		setTitle("Create Event");
-		addWindowListener(new WindowAdapter() {
-			
-			@Override
-            public void windowClosing(WindowEvent e)
-            {
-				for(MouseListener listener: mouseListeners)
-					createButton.addMouseListener(listener);
-            }
-		});
 		final Container contentPane2 = getContentPane();
 		setLayout(new BoxLayout(contentPane2, BoxLayout.Y_AXIS));
-		JPanel namePanel = new JPanel();
+		JLabel startingDateLabel = new JLabel("Starting date");
+		JButton startingDate = new JButton(click.toString());
+		JLabel endingDateLabel = new JLabel("Ending date:");
+		JButton endingDate = new JButton(click.toString());
+		JButton agendaButton = new JButton("Show agenda");
+		JTextArea errorTextArea = new JTextArea();
+		
 		JPanel datePanel = new JPanel();
 		JPanel errorPanel = new JPanel();
 		JPanel buttonPanel = new JPanel();
-		JLabel nameLabel = new JLabel("Add title: ");
-		JTextField nameField = new JTextField(10);
-		JButton date = new JButton();
-		JTextArea errorTextArea = new JTextArea();
 		errorTextArea.setForeground(Color.RED);
 		errorTextArea.setEditable(false);
-		date.setText(click.toString());
-		date.addActionListener(new ActionListener() {
-
+		datePanel.add(startingDateLabel);
+		datePanel.add(startingDate);
+		datePanel.add(endingDateLabel);
+		datePanel.add(endingDate);
+		errorPanel.add(errorTextArea);
+		errorPanel.setVisible(false);
+		buttonPanel.add(agendaButton);
+		
+		ActionListener listener = new ActionListener() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void actionPerformed(ActionEvent event) {
 				JFrame frame = new JFrame();
 				frame.addWindowFocusListener(new WindowFocusListener() {
 
@@ -112,10 +106,18 @@ public class CreateEventFrame extends JFrame{
 							firstDay = firstDay.plusMonths(1);
 							firstDay = LocalDate.of(firstDay.getYear(), firstDay.getMonth(), 1);
 						}
+						if((JButton) event.getSource() == startingDate)
+							date = startingDate;
+						else
+							date = endingDate;
 						setDate(panel4, frame, dateButton, date);
 					}
 					
 				};
+				if((JButton) event.getSource() == startingDate)
+					date = startingDate;
+				else
+					date = endingDate;
 				previousMonthButton.addActionListener(eventListener);
 				nextMonthButton.addActionListener(eventListener);
 				setDate(panel4, frame, dateButton, date);
@@ -130,89 +132,42 @@ public class CreateEventFrame extends JFrame{
 			    frame.setVisible(true);
 			}
 			
-		});
-		Integer hour[] = new Integer[24];
-		for(int i = 0; i < hour.length; i++) {
-			hour[i] = i;
-		}
-		JLabel startingTimeLabel = new JLabel("Staring Time:");
-		JComboBox<Integer> startingTimeBox = new JComboBox<>(hour);
-		JLabel endingTimeLabel = new JLabel("Ending Time:");
-		JComboBox<Integer> endingTimeBox = new JComboBox<>(hour);
-		JButton addButton = new JButton("Add");
-		addButton.addActionListener(new ActionListener() {
+		};
+		startingDate.addActionListener(listener);
+		endingDate.addActionListener(listener);
+		
+		agendaButton.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				int start = (Integer) startingTimeBox.getSelectedItem();
-				int end = (Integer) endingTimeBox.getSelectedItem();
-				
-				String name = nameField.getText();
-				if(name.length() == 0) {
-					errorTextArea.setText("Please enter a event name.");
-					errorPanel.setVisible(true);
-				}
-				else if(start == end) {
-					errorTextArea.setText("Starting time and ending time can't be equal.");
-					errorPanel.setVisible(true);
-				}
-				else if(start > end && end != 0){
-					errorTextArea.setText("Starting time can't be greater than ending time if ending time is not zero.");
+				String start = startingDate.getText();
+				String end = endingDate.getText();
+				if(start.compareTo(end) > 0) {
+					errorTextArea.setText("Starting date can't be greater than ending date!");
 					errorPanel.setVisible(true);
 				}
 				else {
-					Event newEvent = new Event(name, click.getYear(), click.getMonthValue(), 0
-							                 , Integer.toString(click.getDayOfMonth()), start, end);
-					if(dataModel.checkConflict(newEvent)) {
-						errorTextArea.setText("Time conflict, please reenter the time.");
-						errorPanel.setVisible(true);
-					}
-					else {
-						dataModel.addEvent(newEvent);
-						EventFrame ef = cf.getEventFrame();
-						if(ef.getView().equals("day")) {
-							ef.setDayView();
-						}
-						else if(ef.getView().equals("week")) {
-							ef.setWeekView();
-						}
-						else if(ef.getView().equals("month")){
-							ef.setMonthView();
-						}
-						else {
-							ef.setAgendaView();
-						}
-						errorPanel.setVisible(false);
-						for(MouseListener listener: mouseListeners)
-							createButton.addMouseListener(listener);
-						dispose();
-					}
+					errorPanel.setVisible(false);
+					String startArray[] = start.split("-");
+					String endArray[] = end.split("-"); 
+					ef.setStartingDate(LocalDate.of(Integer.parseInt(startArray[0]), Integer.parseInt(startArray[1]), Integer.parseInt(startArray[2])));
+					ef.setEndingDate( LocalDate.of(Integer.parseInt(endArray[0]), Integer.parseInt(endArray[1]), Integer.parseInt(endArray[2])));
+					ef.setAgendaView();
+					dispose();
 				}
 			}
 		});
 		
-		namePanel.add(nameLabel);
-		namePanel.add(nameField);
-		datePanel.add(date);
-		datePanel.add(startingTimeLabel);
-		datePanel.add(startingTimeBox);
-		datePanel.add(endingTimeLabel);
-		datePanel.add(endingTimeBox);
-		errorPanel.add(errorTextArea);
-		errorPanel.setVisible(false);
-		buttonPanel.add(addButton);
-		
-		setPreferredSize(new Dimension(500, 250));
-		add(namePanel);
 		add(datePanel);
 		add(errorPanel);
 		add(buttonPanel);
+	    setLocation(0, 500);
+	    setPreferredSize(new Dimension(500, 150));
 	    setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 	    pack();
 	    setVisible(true);
-	
 	}
-
+	
 	public void setDate(JPanel panel4, JFrame frame, JButton dateButton, JButton date) {
 		panel4.removeAll();
 		for(int i = 0; i < DAY_OF_WEEK.length(); i++) {
@@ -304,20 +259,6 @@ public class CreateEventFrame extends JFrame{
 						click = LocalDate.of(firstDay.getYear(), firstDay.getMonth(), Integer.parseInt(button.getText()));
 					}
 					firstDay = LocalDate.of(firstDay.getYear(), firstDay.getMonth(), 1);
-
-					cf.setCurrentClick(click);
-					cf.setFirstDay(firstDay);
-					cf.setDate();
-					EventFrame ef = cf.getEventFrame();
-					if(ef.getView().equals("day")) {
-						ef.setDayView();
-					}
-					else if(ef.getView().equals("week")) {
-						ef.setWeekView();
-					}
-					else {
-						ef.setMonthView();
-					}
 					
 					date.setText(click.toString());
 					frame.dispose();

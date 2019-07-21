@@ -37,14 +37,12 @@ public class DataModel{
 	public String format(ArrayList<Event> events, EventFormatter formatter, LocalDate currentDay) {
 		String result = "";
 		result += formatter.formatHeader(currentDay);
-		if(events.size() == 0)
-			result += "\n";
-		else {
+		if(events.size() != 0) {
 			for(Event event: events) {
 				result += formatter.formatEvent(event);
 			}
-			result += formatter.formatFooter();
 		}
+		result += formatter.formatFooter();
 		return result;
 	}
 	

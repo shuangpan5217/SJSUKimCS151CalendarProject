@@ -28,6 +28,8 @@ public class EventFrame extends JFrame implements ChangeListener{
 	private String view;
 	private LocalDate current;
 	private String result;
+	private LocalDate startingDate;
+	private LocalDate endingDate;
     private JButton dayButton;
     private JButton weekButton;
     private JButton monthButton;
@@ -81,10 +83,7 @@ public class EventFrame extends JFrame implements ChangeListener{
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				calendarFrame.setView(view);
-				stateChanged(null);
-				setTextArea();
-				result = "";
+				setDayView();
 			}
 	    	
 	    });
@@ -93,7 +92,7 @@ public class EventFrame extends JFrame implements ChangeListener{
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				calendarFrame.setView("week");
+				setWeekView();
 			}
 	    	
 	    });
@@ -102,27 +101,20 @@ public class EventFrame extends JFrame implements ChangeListener{
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				calendarFrame.setView("month");
-				textArea.setText("");
+				setMonthView();
 			}
 	    	
 	    });
 	    
-	/*    fileButton.addActionListener(new ActionListener() {
-	    	public void actionPerformed(ActionEvent e) {
-	    		if (Desktop.isDesktopSupported()) {
-	    		    try {
-	    		    	if(System.getProperty("os.name").toUpperCase().contains("MAC"))
-						Desktop.getDesktop().open(new File("/users/"));
-	    		    	else
-	    		    		Desktop.getDesktop().open(new File("C:\\"));
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-	    		}
-	    	}
-	    });  */
+	    agendaButton.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				@SuppressWarnings("unused")
+				AgendaFrame af = new AgendaFrame(calendarFrame.getCurrentClick(), calendarFrame.getEventFrame());
+			}
+	    	
+	    });
 	    
 	    JPanel panel1 = new JPanel();
 	    panel1.add(dayButton);
@@ -141,7 +133,6 @@ public class EventFrame extends JFrame implements ChangeListener{
 	    
 	    
 	    JPanel panel3 = new JPanel();
-	    panel3.add(textArea);
 	    panel3.add(scroll);
 	    
 	    add(panel1);
@@ -159,8 +150,18 @@ public class EventFrame extends JFrame implements ChangeListener{
 			String events[] = fileScanner.nextLine().split(";");
 			dataModel.addEvent(new Event(events[0], Integer.parseInt(events[1]), Integer.parseInt(events[2]), Integer.parseInt(events[3])
 					   				   , events[4], Integer.parseInt(events[5]), Integer.parseInt(events[6])));
-			textArea.setText(result);
-			setResult();
+			if(view.equals("day")) {
+				setDayView();
+			}
+			else if(view.equals("week")) {
+				setWeekView();
+			}
+			else if(view.equals("month")){
+				setMonthView();
+			}
+			else {
+				setAgendaView();
+			}
 		}
 	}
 	
@@ -171,7 +172,6 @@ public class EventFrame extends JFrame implements ChangeListener{
 
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		System.out.println();
 		ArrayList<Event> events = dataModel.getEvents();
 		current = calendarFrame.getCurrentClick();
 		ArrayList<Event> eventsOnCurrentDay = new ArrayList<>();
@@ -191,7 +191,6 @@ public class EventFrame extends JFrame implements ChangeListener{
 				
 		}
 		result = dataModel.format(eventsOnCurrentDay, formatter, current);
-		result = result.trim() + '\n';
 	}
 	
 	public void setTextArea() {
@@ -208,5 +207,96 @@ public class EventFrame extends JFrame implements ChangeListener{
 	
 	public int getDays() {
 		return days;
+	}
+	
+	public String getView() {
+		return view;
+	}
+	
+	public void setDayView() {
+		view = "day";
+		calendarFrame.setView(view);
+		stateChanged(null);
+		setTextArea();
+		setResult();
+	}
+	
+	public void setWeekView() {
+		view = "week";
+		calendarFrame.setView(view);
+		current = calendarFrame.getCurrentClick();
+		LocalDate click = LocalDate.of(current.getYear(), current.getMonth(), current.getDayOfMonth());
+		int dayOfWeek = current.getDayOfWeek().getValue();
+		String weekResult = "";
+		if(dayOfWeek != 7) {
+			for(int i = dayOfWeek; i > 1; i--) {
+				current = current.minusDays(1);
+			}
+			current = current.minusDays(1);
+		}
+		for(int i = 0; i <= 6; i++) {
+			calendarFrame.setCurrentClick(current);
+			stateChanged(null);
+			weekResult += result;
+			current = current.plusDays(1);
+		}
+		current = click;
+		result = weekResult;
+		setTextArea();
+		setResult();
+		calendarFrame.setCurrentClick(click);
+	}
+	
+	public void setMonthView() {
+		view = "month";
+		calendarFrame.setView(view);
+		current = calendarFrame.getCurrentClick();
+		LocalDate firstDay = LocalDate.of(current.getYear(), current.getMonth(), 1);
+		LocalDate click = LocalDate.of(current.getYear(), current.getMonth(), current.getDayOfMonth());
+		int dayOfWeek = firstDay.getDayOfWeek().getValue();
+		String monthResult = "";
+		if(dayOfWeek != 7) {
+			for(int i = dayOfWeek; i > 1; i--) {
+				firstDay = firstDay.minusDays(1);
+			}
+			firstDay = firstDay.minusDays(1);
+		}
+		for(int i = 0; i < 42; i++) {
+			calendarFrame.setCurrentClick(firstDay);
+			stateChanged(null);
+			monthResult += result;
+			firstDay = firstDay.plusDays(1);
+		}
+		result = monthResult;
+		setTextArea();
+		setResult();
+		calendarFrame.setCurrentClick(click);
+	}
+	
+	public void setAgendaView() {
+		LocalDate start = LocalDate.of(startingDate.getYear(), startingDate.getMonth(), startingDate.getDayOfMonth());
+		view = "agenda";
+		current = calendarFrame.getCurrentClick();
+		LocalDate click = LocalDate.of(current.getYear(), current.getMonth(), current.getDayOfMonth());
+		String agendaResult = "";
+		while(startingDate.compareTo(endingDate) <= 0) {
+			calendarFrame.setCurrentClick(startingDate);
+			stateChanged(null);
+			agendaResult += result;
+			startingDate = startingDate.plusDays(1);
+		}
+		result = agendaResult;
+		setTextArea();
+		setResult();
+		calendarFrame.setCurrentClick(click);
+		startingDate = start;
+	}
+	
+	public void setStartingDate(LocalDate startingDate) {
+		this.startingDate = startingDate;
+	}
+	
+	public void setEndingDate(LocalDate endingDate) {
+		this.endingDate = endingDate;
 	}
 }

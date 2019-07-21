@@ -40,9 +40,9 @@ public class CalendarFrame extends JFrame{
 		firstDay = LocalDate.of(LocalDate.now().getYear(), LocalDate.now().getMonth(), 1);
 		dateButton = new JButton();
 		panel4 = new JPanel();
-		view = null;
-		previousButton = new JButton("Previous Day view");
-		nextButton = new JButton("Next Day view");
+		view = "day";
+		previousButton = new JButton("Previous day view");
+		nextButton = new JButton("Next day view");
 		
 		JButton todayButton = new JButton("Today");
 		JButton createButton = new JButton("CREATE EVENT");
@@ -143,10 +143,15 @@ public class CalendarFrame extends JFrame{
 				firstDay = LocalDate.of(LocalDate.now().getYear(), LocalDate.now().getMonth(), 1);
 				click = LocalDate.now();
 				setDate();
-				eventFrame.stateChanged(null);
-				System.out.println(eventFrame.getResult());
-				eventFrame.setTextArea();
-				eventFrame.setResult();
+				if(view.equals("day")) {
+					eventFrame.setDayView();
+				}
+				else if(view.equals("week")) {
+					eventFrame.setWeekView();
+				}
+				else {
+					eventFrame.setMonthView();
+				}
 			}
 			
 		});
@@ -155,17 +160,40 @@ public class CalendarFrame extends JFrame{
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				if(((JButton) e.getSource()) == previousButton) {
-					click = click.minusDays(1);
+				if(view.equals("day")) {
+					if(((JButton) e.getSource()) == previousButton) {
+						click = click.minusDays(1);
+					}
+					else if(((JButton) e.getSource()) == nextButton) {
+						click = click.plusDays(1);
+					}
+					firstDay = LocalDate.of(click.getYear(), click.getMonth(), 1);
+					setDate();
+					eventFrame.setDayView();
 				}
-				else if(((JButton) e.getSource()) == nextButton) {
-					click = click.plusDays(1);
+				else if(view.equals("week")) {
+					if(((JButton) e.getSource()) == previousButton) {
+						click = click.minusWeeks(1);
+					}
+					else if(((JButton) e.getSource()) == nextButton) {
+						click = click.plusWeeks(1);
+					}
+					firstDay = LocalDate.of(click.getYear(), click.getMonth(), 1);
+					setDate();
+					eventFrame.setWeekView();
 				}
-				firstDay = LocalDate.of(click.getYear(), click.getMonth(), 1);
-				setDate();
-				eventFrame.stateChanged(null);
-				eventFrame.setTextArea();
-				eventFrame.setResult();
+				else {
+					if(((JButton) e.getSource()) == previousButton) {
+						click = click.minusMonths(1);
+					}
+					else if(((JButton) e.getSource()) == nextButton) {
+						click = click.plusMonths(1);
+					}
+					click = LocalDate.of(click.getYear(), click.getMonth(), 1);
+					firstDay = LocalDate.of(click.getYear(), click.getMonth(), 1);
+					setDate();
+					eventFrame.setMonthView();
+				}
 			}
 			
 		};
@@ -199,7 +227,10 @@ public class CalendarFrame extends JFrame{
 			for(int i = 0; i < firstDayOfMonth; i++) {
 				JButton a = new JButton(Integer.toString(firstDay.getDayOfMonth()));
 				a.setForeground(Color.GRAY);
-				a.setBorderPainted(false);
+				if(click.equals(firstDay))
+					a.setBorderPainted(true);
+				else
+					a.setBorderPainted(false);
 				panel4.add(a);
 				firstDay = firstDay.plusDays(1);
 				buttons.add(a);
@@ -227,7 +258,10 @@ public class CalendarFrame extends JFrame{
 		for(int i = 0; i < leftDays; i++) {
 			JButton a = new JButton(Integer.toString(firstDay.getDayOfMonth()));
 			a.setForeground(Color.GRAY);
-			a.setBorderPainted(false);
+			if(click.equals(firstDay))
+				a.setBorderPainted(true);
+			else
+				a.setBorderPainted(false);
 			panel4.add(a);
 			firstDay = firstDay.plusDays(1);
 			buttons.add(a);
@@ -261,6 +295,10 @@ public class CalendarFrame extends JFrame{
 								button.setBorderPainted(false);
 								break;
 							}
+							else if(button.getForeground().equals(Color.GRAY) && button.isBorderPainted()) {
+								button.setBorderPainted(false);
+								break;
+							}
 						}
 						if(!(firstDay.getYear() == LocalDate.now().getYear() 
 						&& firstDay.getMonthValue() == LocalDate.now().getMonthValue() 
@@ -282,9 +320,15 @@ public class CalendarFrame extends JFrame{
 						click = LocalDate.of(firstDay.getYear(), firstDay.getMonth(), Integer.parseInt(button.getText()));
 						setDate();
 					}
-					eventFrame.stateChanged(null);
-					eventFrame.setTextArea();
-					eventFrame.setResult();
+					if(view.equals("day")) {
+						eventFrame.setDayView();
+					}
+					else if(view.equals("week")) {
+						eventFrame.setWeekView();
+					}
+					else {
+						eventFrame.setMonthView();
+					}
 				}
 
 				@Override
@@ -306,7 +350,16 @@ public class CalendarFrame extends JFrame{
 
 				@Override
 				public void mouseExited(MouseEvent e) {
-					if(!((firstDay.getYear() == LocalDate.now().getYear() 
+					LocalDate local = null;
+					if(button.getForeground().equals(Color.GRAY)) {
+						if(Integer.parseInt(button.getText()) > 22)
+							local = LocalDate.of(firstDay.minusMonths(1).getYear(), firstDay.minusMonths(1).getMonth(), Integer.parseInt(button.getText()));
+						else
+							local = LocalDate.of(firstDay.plusMonths(1).getYear(), firstDay.plusMonths(1).getMonth(), Integer.parseInt(button.getText()));
+						if(!local.equals(click))
+							button.setBorderPainted(false);
+					}
+					else if(!((firstDay.getYear() == LocalDate.now().getYear() 
 					   && firstDay.getMonthValue() == LocalDate.now().getMonthValue() 
 					   && Integer.parseInt(button.getText()) == LocalDate.now().getDayOfMonth()) 
 				     || ((firstDay.getYear() == click.getYear() 
@@ -322,9 +375,7 @@ public class CalendarFrame extends JFrame{
 	
 	public void setEventFrame(EventFrame frame) {
 		eventFrame = frame;
-		eventFrame.stateChanged(null);
-		eventFrame.setTextArea();
-		eventFrame.setResult();
+		eventFrame.setDayView();
 	}
 	
 	public EventFrame getEventFrame() {
@@ -349,7 +400,7 @@ public class CalendarFrame extends JFrame{
 	
 	public void setView(String view) {
 		this.view = view;
-		if(this.view.equalsIgnoreCase("day")) {
+		if(this.view.equalsIgnoreCase("day") || this.view.equalsIgnoreCase("agenda")) {
 			previousButton.setText("Previous day view");
 			nextButton.setText("Next day view");
 		}
