@@ -1,5 +1,3 @@
-package calendarProject;
-
 import java.awt.Container;
 import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
@@ -19,12 +17,16 @@ import javax.swing.JTextArea;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+/**
+ * The interface of the event frame.
+ * @author Shuang Pan, Yunru Chen, Nada Elzeini
+ * @version 1.0 07/23/2019
+ */
 public class EventFrame extends JFrame implements ChangeListener{
 	private DataModel dataModel;
 	private CalendarFrame calendarFrame;
 	private EventFormatter formatter;
 	private final JTextArea textArea;
-	private int days;
 	private String view;
 	private LocalDate current;
 	private String result;
@@ -38,11 +40,16 @@ public class EventFrame extends JFrame implements ChangeListener{
 	
 	private static final long serialVersionUID = 1L;
 	
+	/**
+	 * Initialize the interface of the event frame.
+	 * @param dataModel the DataModel object
+	 * @param formatter the EventFormatter object
+	 */
 	public EventFrame(DataModel dataModel, EventFormatter formatter) {
 		this.dataModel = dataModel;
 		this.formatter = formatter;
-		days = 0;
 		dayButton = new JButton("Day");
+		dayButton.setSelected(true);
 		weekButton = new JButton("Week");
 		monthButton = new JButton("Month");
 		agendaButton = new JButton("Agenda");
@@ -79,42 +86,37 @@ public class EventFrame extends JFrame implements ChangeListener{
 	    };
 	    fileButton.addActionListener(listener);
 	    
-	    dayButton.addActionListener(new ActionListener() {
+	    JButton viewButtons[] = new JButton[] {dayButton,  weekButton, monthButton, agendaButton};
+	    ActionListener viewListener = new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				setDayView();
+				JButton button = (JButton) e.getSource();
+				if(button == viewButtons[0]) {
+					setDayView();
+				}
+				else if(button == viewButtons[1]) {
+					setWeekView();
+				}
+				else if(button == viewButtons[2]) {
+					setMonthView();
+				}
+				else {
+					@SuppressWarnings("unused")
+					AgendaFrame af = new AgendaFrame(calendarFrame.getCurrentClick(), calendarFrame.getEventFrame());
+				}
+				if(button != viewButtons[3]) {
+					for(int i = 0; i < viewButtons.length; i++) {
+						viewButtons[i].setSelected(false);
+					}
+					button.setSelected(true);
+				}
 			}
 	    	
-	    });
-	    
-	    weekButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				setWeekView();
-			}
-	    	
-	    });
-	    
-	    monthButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				setMonthView();
-			}
-	    	
-	    });
-	    
-	    agendaButton.addActionListener(new ActionListener() {
-
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				@SuppressWarnings("unused")
-				AgendaFrame af = new AgendaFrame(calendarFrame.getCurrentClick(), calendarFrame.getEventFrame());
-			}
-	    	
-	    });
+	    };
+	    for(int i = 0; i < viewButtons.length; i++) {
+	    	viewButtons[i].addActionListener(viewListener);
+	    }
 	    
 	    JPanel panel1 = new JPanel();
 	    panel1.add(dayButton);
@@ -139,15 +141,22 @@ public class EventFrame extends JFrame implements ChangeListener{
 	    add(panel2);
 	    add(panel3);
 	    
+	    setTitle("Events");
 	    setLocation(0, 500);
 	    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	    pack();
 	    setVisible(true);
 	}
 	
+	/**
+	 * Read events from the file and add them to the data model.
+	 * @param fileScanner the file scanner to be used to read file
+	 */
 	public void processFile(Scanner fileScanner) {
 		while(fileScanner.hasNextLine()) {
 			String events[] = fileScanner.nextLine().split(";");
+			for(int i = 0; i < events.length; i++)
+				events[i] = events[i].trim();
 			dataModel.addEvent(new Event(events[0], Integer.parseInt(events[1]), Integer.parseInt(events[2]), Integer.parseInt(events[3])
 					   				   , events[4], Integer.parseInt(events[5]), Integer.parseInt(events[6])));
 			if(view.equals("day")) {
@@ -165,11 +174,19 @@ public class EventFrame extends JFrame implements ChangeListener{
 		}
 	}
 	
+	/**
+	 * Set the calendar frame reference and current click.
+	 * @param frame the calendar frame
+	 */
 	public void setCalendarFrame(CalendarFrame frame) {
 		this.calendarFrame = frame;
 		current = calendarFrame.getCurrentClick();
 	}
 
+	/**
+	 * Do reaction when the new event is added to the dataModel or set new views.
+	 * @param e the ChangeEvent object
+	 */
 	@Override
 	public void stateChanged(ChangeEvent e) {
 		ArrayList<Event> events = dataModel.getEvents();
@@ -193,26 +210,39 @@ public class EventFrame extends JFrame implements ChangeListener{
 		result = dataModel.format(eventsOnCurrentDay, formatter, current);
 	}
 	
+	/**
+	 * Set the text area with new results.
+	 */
 	public void setTextArea() {
 		textArea.setText(result);
 	}
 	
+	/**
+	 * Set the result to empty for other useage. 
+	 */
 	public void setResult() {
 		result = "";
 	}
 	
+	/**
+	 * Get latest result in the textArea.
+	 * @return the latest result.
+	 */
 	public String getResult() {
 		return result;
 	}
-	
-	public int getDays() {
-		return days;
-	}
-	
+
+	/**
+	 * Get current view
+	 * @return the current view
+	 */
 	public String getView() {
 		return view;
 	}
 	
+	/**
+	 * Set the day view to the text area and calendar frame.
+	 */
 	public void setDayView() {
 		view = "day";
 		calendarFrame.setView(view);
@@ -221,6 +251,9 @@ public class EventFrame extends JFrame implements ChangeListener{
 		setResult();
 	}
 	
+	/**
+	 * Set the week view to the text area and calendar frame.
+	 */
 	public void setWeekView() {
 		view = "week";
 		calendarFrame.setView(view);
@@ -247,21 +280,18 @@ public class EventFrame extends JFrame implements ChangeListener{
 		calendarFrame.setCurrentClick(click);
 	}
 	
+	/**
+	 * Set the month view to the text area and calendar frame.
+	 */
 	public void setMonthView() {
 		view = "month";
 		calendarFrame.setView(view);
 		current = calendarFrame.getCurrentClick();
 		LocalDate firstDay = LocalDate.of(current.getYear(), current.getMonth(), 1);
 		LocalDate click = LocalDate.of(current.getYear(), current.getMonth(), current.getDayOfMonth());
-		int dayOfWeek = firstDay.getDayOfWeek().getValue();
 		String monthResult = "";
-		if(dayOfWeek != 7) {
-			for(int i = dayOfWeek; i > 1; i--) {
-				firstDay = firstDay.minusDays(1);
-			}
-			firstDay = firstDay.minusDays(1);
-		}
-		for(int i = 0; i < 42; i++) {
+		int length = firstDay.getMonth().length(firstDay.isLeapYear());
+		for(int i = 0; i < length; i++) {
 			calendarFrame.setCurrentClick(firstDay);
 			stateChanged(null);
 			monthResult += result;
@@ -273,6 +303,9 @@ public class EventFrame extends JFrame implements ChangeListener{
 		calendarFrame.setCurrentClick(click);
 	}
 	
+	/**
+	 * Set the agenda view to the text area and calendar frame.
+	 */
 	public void setAgendaView() {
 		LocalDate start = LocalDate.of(startingDate.getYear(), startingDate.getMonth(), startingDate.getDayOfMonth());
 		view = "agenda";
@@ -292,10 +325,18 @@ public class EventFrame extends JFrame implements ChangeListener{
 		startingDate = start;
 	}
 	
+	/**
+	 * Set the starting date of the agenda
+	 * @param startingDate the starting date of the agenda
+	 */
 	public void setStartingDate(LocalDate startingDate) {
 		this.startingDate = startingDate;
 	}
 	
+	/**
+	 * Set the ending date of the agenda
+	 * @param endingDate the ending date of the agenda
+	 */
 	public void setEndingDate(LocalDate endingDate) {
 		this.endingDate = endingDate;
 	}

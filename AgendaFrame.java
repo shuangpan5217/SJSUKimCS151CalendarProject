@@ -1,5 +1,3 @@
-package calendarProject;
-
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -21,6 +19,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
+/**
+ * The interface of frame to choose date for the agenda.
+ * @author Shuang Pan, Yunru Chen, Nada Elzeini
+ * @version 1.0 07/23/2019
+ */
 public class AgendaFrame extends JFrame{
 	private LocalDate firstDay;
 	private LocalDate click;
@@ -28,10 +31,15 @@ public class AgendaFrame extends JFrame{
 	private JButton date;
 	@SuppressWarnings("unused")
 	private EventFrame ef;
-	
+
 	private static final long serialVersionUID = 1L;
-	public AgendaFrame(LocalDate click, EventFrame ef) {
-		this.click = LocalDate.of(click.getYear(), click.getMonth(), click.getDayOfMonth());
+	/**
+	 * Initialize the interface of the agenda frame.
+	 * @param click the current clicked date in the calendar frame
+	 * @param ef the EventFrame object reference
+	 */
+	public AgendaFrame(LocalDate previousClick, EventFrame ef) {
+		this.click = LocalDate.of(previousClick.getYear(), previousClick.getMonth(), previousClick.getDayOfMonth());
 		firstDay = LocalDate.of(click.getYear(), click.getMonth(), 1);
 		date = new JButton(click.toString());
 		setTitle("Agenda");
@@ -121,6 +129,7 @@ public class AgendaFrame extends JFrame{
 				previousMonthButton.addActionListener(eventListener);
 				nextMonthButton.addActionListener(eventListener);
 				setDate(panel4, frame, dateButton, date);
+				firstDay = LocalDate.of(firstDay.getYear(), firstDay.getMonth(), 1);
 				
 				
 				frame.add(panel3);
@@ -168,6 +177,13 @@ public class AgendaFrame extends JFrame{
 	    setVisible(true);
 	}
 	
+	/**
+	 * Open a date frame and let users select the date.
+	 * @param panel4 the JPanel which holds the date interface
+	 * @param frame the frame which holds the date panel
+	 * @param dateButton set the date about month and year on the date frame
+	 * @param date set the selected date to the agenda interface
+	 */
 	public void setDate(JPanel panel4, JFrame frame, JButton dateButton, JButton date) {
 		panel4.removeAll();
 		for(int i = 0; i < DAY_OF_WEEK.length(); i++) {

@@ -1,5 +1,3 @@
-package calendarProject;
-
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -24,21 +22,33 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
+/**
+ * The interface of the creating event.
+ * @author Shuang Pan, Yunru Chen, Nada Elzeini
+ * @version 1.0 07/23/2019
+ */
 public class CreateEventFrame extends JFrame{
 	private LocalDate firstDay;
 	private LocalDate click;
 	private CalendarFrame cf;
-	@SuppressWarnings("unused")
 	private DataModel dataModel;
 	public static final String DAY_OF_WEEK = "SMTWTFA";
 	
 	private static final long serialVersionUID = 1L;
 
-	public CreateEventFrame(LocalDate click, CalendarFrame cf, DataModel dataModel, JButton createButton, MouseListener[] mouseListeners) {
-		this.cf = cf;
-		this.click = click;
+	/**
+	 * Initialize the interface of the creating-event interface.
+	 * @param click the current click on the calendar frame
+	 * @param cf the calendar frame reference
+	 * @param dataModel the DataModel object
+	 * @param createButton the CreateEvent Button from the calendar frame
+	 * @param mouseListeners the mouse listeners on the CreateEvent button
+	 */
+	public CreateEventFrame(LocalDate previousClick, CalendarFrame calendarFrame, DataModel dm, JButton createButton, MouseListener[] mouseListeners) {
+		this.cf = calendarFrame;
+		this.click = previousClick;
 		firstDay = LocalDate.of(click.getYear(), click.getMonth(), 1);
-		this.dataModel = dataModel;
+		this.dataModel = dm;
 		
 		
 		setTitle("Create Event");
@@ -119,7 +129,7 @@ public class CreateEventFrame extends JFrame{
 				previousMonthButton.addActionListener(eventListener);
 				nextMonthButton.addActionListener(eventListener);
 				setDate(panel4, frame, dateButton, date);
-				
+				firstDay = LocalDate.of(firstDay.getYear(), firstDay.getMonth(), 1);
 				
 				frame.add(panel3);
 				frame.add(panel4);
@@ -140,6 +150,8 @@ public class CreateEventFrame extends JFrame{
 		JLabel endingTimeLabel = new JLabel("Ending Time:");
 		JComboBox<Integer> endingTimeBox = new JComboBox<>(hour);
 		JButton addButton = new JButton("Add");
+		
+		//check time conflict and add event.
 		addButton.addActionListener(new ActionListener() {
 
 			@Override
@@ -213,6 +225,13 @@ public class CreateEventFrame extends JFrame{
 	
 	}
 
+	/**
+	 * Open a date frame and let users select the date.
+	 * @param panel4 the JPanel which holds the date interface
+	 * @param frame the frame which holds the date panel
+	 * @param dateButton set the date about month and year on the date frame
+	 * @param date set the selected date to the creating-event interface
+	 */
 	public void setDate(JPanel panel4, JFrame frame, JButton dateButton, JButton date) {
 		panel4.removeAll();
 		for(int i = 0; i < DAY_OF_WEEK.length(); i++) {
@@ -304,7 +323,7 @@ public class CreateEventFrame extends JFrame{
 						click = LocalDate.of(firstDay.getYear(), firstDay.getMonth(), Integer.parseInt(button.getText()));
 					}
 					firstDay = LocalDate.of(firstDay.getYear(), firstDay.getMonth(), 1);
-
+					LocalDate previousClick = cf.getCurrentClick();
 					cf.setCurrentClick(click);
 					cf.setFirstDay(firstDay);
 					cf.setDate();
@@ -313,10 +332,23 @@ public class CreateEventFrame extends JFrame{
 						ef.setDayView();
 					}
 					else if(ef.getView().equals("week")) {
-						ef.setWeekView();
+						int x = previousClick.getDayOfWeek().getValue();
+						LocalDate p = null;
+						if(x != 7) {
+							p = previousClick.minusDays(x);
+						}
+						else
+							p = previousClick;
+						LocalDate n = p.plusDays(6);
+						if(click.compareTo(p) < 0 || click.compareTo(n) > 0)
+							ef.setWeekView();
+					}
+					else if(ef.getView().equals("month")){
+						if(!(previousClick.getYear() == click.getYear() && previousClick.getMonthValue() == click.getMonthValue()))
+							ef.setMonthView();
 					}
 					else {
-						ef.setMonthView();
+						ef.setAgendaView();
 					}
 					
 					date.setText(click.toString());
